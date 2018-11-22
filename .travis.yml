@@ -1,0 +1,22 @@
+sudo: required
+service:
+  - docker
+
+before_install:
+  - docker build -t freefaller/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run freefaller/react-test npm test -- --coverage
+
+after_success:
+  - docker build -t freefaller/multi-client ./client
+  - docker build -t freefaller/multi-nginx ./nginx
+  - docker build -t freefaller/multi-server ./server
+  - docker build -t freefaller/multi-worker ./worker
+  # Log in to docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Push images to docker hub
+  - docker push freefaller/multi-client
+  - docker push freefaller/multi-nginx
+  - docker push freefaller/multi-server
+  - docker push freefaller/multi-worker
